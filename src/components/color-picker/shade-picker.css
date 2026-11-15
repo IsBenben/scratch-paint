@@ -1,0 +1,21 @@
+.area {
+    width: 150px;
+    height: 150px;
+    border-radius: 0;
+    margin: 16px auto;
+    position: relative;
+    user-select: none;
+    touch-action: none;
+}
+
+.area > .handle {
+    margin-top: 0;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+}
+
+.readout {
+    display: inline-flex;
+    align-items: center;
+    direction: ltr;
+}

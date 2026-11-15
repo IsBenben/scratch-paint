@@ -1,16 +1,18 @@
 .readout {
-  width: 28px;
-  height: 16px;
+  box-sizing: border-box;
+  width: 40px;
+  height: 20px;
+  padding: 0 2px;
   text-align: center;
   -moz-appearance: textfield;
   font: inherit;
   font-weight: bold;
 }
 [dir="ltr"] .readout {
-  margin-left: 10px;
+  margin-left: 6px;
 }
 [dir="rtl"] .readout {
-  margin-right: 10px;
+  margin-right: 6px;
 }
 .readout::-webkit-outer-spin-button,
 .readout::-webkit-inner-spin-button {

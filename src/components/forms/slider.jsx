@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import bindAll from 'lodash.bindall';
 import classNames from 'classnames';
 import {getEventXY} from '../../lib/touch-utils';
+import {getSliderPosition, getWheelValue, getWheelDelta} from '../../lib/color-picker-position';
 
 import styles from './slider.css';
 
@@ -16,7 +17,8 @@ class SliderComponent extends React.Component {
             'handleMouseDown',
             'handleMouseUp',
             'handleMouseMove',
-            'handleClickBackground',
+            'handleModifiers',
+            'handleWheel',
             'setBackground',
             'setHandle'
         ]);
@@ -25,46 +27,74 @@ class SliderComponent extends React.Component {
         this.handleClickOffset = 0;
     }
 
+    componentWillUnmount () {
+        this.handleMouseUp();
+        this.setBackground(null);
+    }
+
     handleMouseDown (event) {
+        if (typeof event.button === 'number' && event.button !== 0) return;
+        if (this.dragging) return;
         event.preventDefault();
+        this.dragging = true;
         document.addEventListener('mousemove', this.handleMouseMove);
         document.addEventListener('mouseup', this.handleMouseUp);
         document.addEventListener('touchmove', this.handleMouseMove, {passive: false});
         document.addEventListener('touchend', this.handleMouseUp);
+        document.addEventListener('touchcancel', this.handleMouseUp);
+        window.addEventListener('blur', this.handleMouseUp);
+        window.addEventListener('keydown', this.handleModifiers);
+        window.addEventListener('keyup', this.handleModifiers);
 
-        this.handleClickOffset = getEventXY(event).x - this.handle.getBoundingClientRect().left;
+        this.handleClickOffset = event.target === this.background ? HANDLE_WIDTH / 2 :
+            getEventXY(event).x - this.handle.getBoundingClientRect().left;
+        this.handleMouseMove(event);
     }
 
     handleMouseUp () {
+        this.dragging = false;
+        this.lastPointer = null;
         document.removeEventListener('mousemove', this.handleMouseMove);
         document.removeEventListener('mouseup', this.handleMouseUp);
         document.removeEventListener('touchmove', this.handleMouseMove, {passive: false});
         document.removeEventListener('touchend', this.handleMouseUp);
+        document.removeEventListener('touchcancel', this.handleMouseUp);
+        window.removeEventListener('blur', this.handleMouseUp);
+        window.removeEventListener('keydown', this.handleModifiers);
+        window.removeEventListener('keyup', this.handleModifiers);
     }
 
     handleMouseMove (event) {
         event.preventDefault();
+        const {x, y} = getEventXY(event);
+        this.lastPointer = {clientX: x, clientY: y};
         this.props.onChange(this.scaleMouseToSliderPosition(event));
     }
 
-    handleClickBackground (event) {
-        // Because the slider handle is a child of the "background" element this handler is registered to, it calls this
-        // when clicked as well. We only want to change the slider value if the user clicked on the background itself.
-        if (event.target !== this.background) return;
-        // Move slider handle's center to the cursor
-        this.handleClickOffset = HANDLE_WIDTH / 2;
-        this.props.onChange(this.scaleMouseToSliderPosition(event));
+    handleModifiers (event) {
+        if (event.key !== 'Control' || !this.lastPointer) return;
+        this.props.onChange(this.scaleMouseToSliderPosition({...this.lastPointer, ctrlKey: event.ctrlKey}));
     }
 
     scaleMouseToSliderPosition (event){
         const {x} = getEventXY(event);
         const backgroundBBox = this.background.getBoundingClientRect();
-        const scaledX = x - backgroundBBox.left - this.handleClickOffset;
-        return Math.max(0, Math.min(100, 100 * scaledX / (backgroundBBox.width - HANDLE_WIDTH)));
+        return getSliderPosition(x, backgroundBBox, this.handleClickOffset,
+            this.props.betterColorPicker && event.ctrlKey);
     }
 
     setBackground (ref) {
+        if (this.background) this.background.removeEventListener('wheel', this.handleWheel);
         this.background = ref;
+        if (ref) ref.addEventListener('wheel', this.handleWheel, {passive: false});
+    }
+
+    handleWheel (event) {
+        const delta = getWheelDelta(event);
+        if (!delta) return;
+        event.preventDefault();
+        this.props.onChange(getWheelValue(this.props.value, delta,
+            this.props.betterColorPicker && event.ctrlKey));
     }
 
     setHandle (ref) {
@@ -88,7 +118,8 @@ class SliderComponent extends React.Component {
                 style={{
                     backgroundImage: this.props.background
                 }}
-                onClick={this.handleClickBackground}
+                onMouseDown={this.handleMouseDown}
+                onTouchStart={this.handleMouseDown}
             >
                 <div
                     className={styles.handle}
@@ -96,8 +127,6 @@ class SliderComponent extends React.Component {
                     style={{
                         left: `${handleOffset}px`
                     }}
-                    onMouseDown={this.handleMouseDown}
-                    onTouchStart={this.handleMouseDown}
                 />
             </div>
         );
@@ -105,6 +134,7 @@ class SliderComponent extends React.Component {
 }
 
 SliderComponent.propTypes = {
+    betterColorPicker: PropTypes.bool,
     background: PropTypes.string,
     lastSlider: PropTypes.bool,
     onChange: PropTypes.func.isRequired,

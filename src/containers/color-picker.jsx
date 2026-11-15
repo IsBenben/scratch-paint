@@ -58,6 +58,9 @@ class ColorPicker extends React.Component {
             'handleHueChange',
             'handleSaturationChange',
             'handleBrightnessChange',
+            'handleShadeChange',
+            'configureAddons',
+            'setPickerElement',
             'handleAlphaChange',
             'handleHexColorChange',
             'handleTransparent',
@@ -70,7 +73,10 @@ class ColorPicker extends React.Component {
             hue: hsv[0],
             saturation: hsv[1],
             brightness: hsv[2],
-            alpha: hsv[3]
+            alpha: hsv[3],
+            betterColorPicker: false,
+            twoDimensional: false,
+            shadeLabel: 'Shade'
         };
     }
     componentWillReceiveProps (newProps) {
@@ -86,6 +92,27 @@ class ColorPicker extends React.Component {
                 alpha: hsv[3]
             });
         }
+    }
+    componentWillUnmount () {
+        this.setPickerElement(null);
+    }
+    setPickerElement (element) {
+        if (this.pickerElement) {
+            this.pickerElement.removeEventListener('sa-color-picker-config', this.configureAddons);
+        }
+        this.pickerElement = element;
+        if (element) {
+            element.addEventListener('sa-color-picker-config', this.configureAddons);
+            element.dispatchEvent(new CustomEvent('sa-color-picker-ready', {bubbles: true}));
+        }
+    }
+    configureAddons (event) {
+        const {betterColorPicker, twoDimensional, shadeLabel} = event.detail;
+        const settings = {};
+        if (typeof betterColorPicker === 'boolean') settings.betterColorPicker = betterColorPicker;
+        if (typeof twoDimensional === 'boolean') settings.twoDimensional = twoDimensional;
+        if (typeof shadeLabel === 'string') settings.shadeLabel = shadeLabel;
+        this.setState(settings);
     }
     getHsv (color) {
         const isTransparent = color === null;
@@ -117,6 +144,10 @@ class ColorPicker extends React.Component {
         this.setState({brightness: brightness}, () => {
             this.handleColorChange();
         });
+    }
+    handleShadeChange (saturation, brightness) {
+        this.ensureNonZeroAlpha();
+        this.setState({saturation, brightness}, () => this.handleColorChange());
     }
     handleColorChange () {
         this.props.onChangeColor(hsvToHex(
@@ -179,6 +210,11 @@ class ColorPicker extends React.Component {
     render () {
         return (
             <ColorPickerComponent
+                betterColorPicker={this.state.betterColorPicker}
+                twoDimensional={this.state.twoDimensional}
+                shadeLabel={this.state.shadeLabel}
+                pickerRef={this.setPickerElement}
+                onShadeChange={this.handleShadeChange}
                 brightness={this.state.brightness}
                 color={this.props.color}
                 color2={this.props.color2}
@@ -234,6 +270,8 @@ const mapStateToProps = state => ({
     mode: state.scratchPaint.mode,
     rtl: state.scratchPaint.layout.rtl
 });
+
+export {ColorPicker};
 
 const mapDispatchToProps = dispatch => ({
     clearSelectedItems: () => {

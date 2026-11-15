@@ -25,6 +25,7 @@ import BufferedInputHOC from '../forms/buffered-input-hoc.jsx';
 import Input from '../forms/input.jsx';
 import {makeAlphaComponent} from '../../lib/tw-color-utils';
 import TWColorReadout from '../tw-color-readout/tw-color-readout.jsx';
+import ShadePicker from './shade-picker.jsx';
 import TWRenderRecoloredImage from '../../tw-recolor/render.jsx';
 
 const BufferedInput = BufferedInputHOC(Input);
@@ -86,7 +87,9 @@ class ColorPickerComponent extends React.Component {
         return (
             <div
                 className={styles.colorPickerContainer}
+                data-sa-color-picker="true"
                 dir={this.props.rtl ? 'rtl' : 'ltr'}
+                ref={this.props.pickerRef}
             >
                 {this.props.shouldShowGradientTools ? (
                     <div>
@@ -223,62 +226,81 @@ class ColorPickerComponent extends React.Component {
                             />
                         </span>
                         <TWColorReadout
+                            betterColorPicker={this.props.betterColorPicker}
                             value={this.props.hue}
                             onChange={this.props.onHueChange}
                         />
                     </div>
                     <div className={styles.rowSlider}>
                         <Slider
+                            betterColorPicker={this.props.betterColorPicker}
                             background={this._makeBackground('hue')}
                             value={this.props.hue}
                             onChange={this.props.onHueChange}
                         />
                     </div>
                 </div>
-                <div className={styles.row}>
-                    <div className={styles.rowHeader}>
-                        <span className={styles.labelName}>
-                            <FormattedMessage
-                                defaultMessage="Saturation"
-                                description="Label for the saturation component in the color picker"
-                                id="paint.paintEditor.saturation"
+                {this.props.twoDimensional ? (
+                    <ShadePicker
+                        betterColorPicker={this.props.betterColorPicker}
+                        brightness={this.props.brightness}
+                        hue={this.props.hue}
+                        label={this.props.shadeLabel}
+                        saturation={this.props.saturation}
+                        onBrightnessChange={this.props.onBrightnessChange}
+                        onChange={this.props.onShadeChange}
+                        onSaturationChange={this.props.onSaturationChange}
+                    />
+                ) : (<React.Fragment>
+                    <div className={styles.row}>
+                        <div className={styles.rowHeader}>
+                            <span className={styles.labelName}>
+                                <FormattedMessage
+                                    defaultMessage="Saturation"
+                                    description="Label for the saturation component in the color picker"
+                                    id="paint.paintEditor.saturation"
+                                />
+                            </span>
+                            <TWColorReadout
+                                betterColorPicker={this.props.betterColorPicker}
+                                value={this.props.saturation}
+                                onChange={this.props.onSaturationChange}
                             />
-                        </span>
-                        <TWColorReadout
-                            value={this.props.saturation}
-                            onChange={this.props.onSaturationChange}
-                        />
-                    </div>
-                    <div className={styles.rowSlider}>
-                        <Slider
-                            background={this._makeBackground('saturation')}
-                            value={this.props.saturation}
-                            onChange={this.props.onSaturationChange}
-                        />
-                    </div>
-                </div>
-                <div className={styles.row}>
-                    <div className={styles.rowHeader}>
-                        <span className={styles.labelName}>
-                            <FormattedMessage
-                                defaultMessage="Brightness"
-                                description="Label for the brightness component in the color picker"
-                                id="paint.paintEditor.brightness"
+                        </div>
+                        <div className={styles.rowSlider}>
+                            <Slider
+                                betterColorPicker={this.props.betterColorPicker}
+                                background={this._makeBackground('saturation')}
+                                value={this.props.saturation}
+                                onChange={this.props.onSaturationChange}
                             />
-                        </span>
-                        <TWColorReadout
-                            value={this.props.brightness}
-                            onChange={this.props.onBrightnessChange}
-                        />
+                        </div>
                     </div>
-                    <div className={styles.rowSlider}>
-                        <Slider
-                            background={this._makeBackground('brightness')}
-                            value={this.props.brightness}
-                            onChange={this.props.onBrightnessChange}
-                        />
+                    <div className={styles.row}>
+                        <div className={styles.rowHeader}>
+                            <span className={styles.labelName}>
+                                <FormattedMessage
+                                    defaultMessage="Brightness"
+                                    description="Label for the brightness component in the color picker"
+                                    id="paint.paintEditor.brightness"
+                                />
+                            </span>
+                            <TWColorReadout
+                                betterColorPicker={this.props.betterColorPicker}
+                                value={this.props.brightness}
+                                onChange={this.props.onBrightnessChange}
+                            />
+                        </div>
+                        <div className={styles.rowSlider}>
+                            <Slider
+                                betterColorPicker={this.props.betterColorPicker}
+                                background={this._makeBackground('brightness')}
+                                value={this.props.brightness}
+                                onChange={this.props.onBrightnessChange}
+                            />
+                        </div>
                     </div>
-                </div>
+                </React.Fragment>)}
                 <div className={styles.row}>
                     <div className={styles.rowHeader}>
                         <span className={styles.labelName}>
@@ -289,6 +311,7 @@ class ColorPickerComponent extends React.Component {
                             />
                         </span>
                         <TWColorReadout
+                            betterColorPicker={this.props.betterColorPicker}
                             value={this.props.alpha}
                             onChange={this.props.onAlphaChange}
                         />
@@ -296,6 +319,7 @@ class ColorPickerComponent extends React.Component {
                     <div className={styles.rowSlider}>
                         <Slider
                             lastSlider
+                            betterColorPicker={this.props.betterColorPicker}
                             background={this._makeBackground('alpha')}
                             value={this.props.alpha}
                             onChange={this.props.onAlphaChange}
@@ -365,6 +389,11 @@ class ColorPickerComponent extends React.Component {
 }
 
 ColorPickerComponent.propTypes = {
+    betterColorPicker: PropTypes.bool,
+    twoDimensional: PropTypes.bool,
+    shadeLabel: PropTypes.string,
+    pickerRef: PropTypes.func,
+    onShadeChange: PropTypes.func,
     alpha: PropTypes.number.isRequired,
     onAlphaChange: PropTypes.func.isRequired,
     hexColor: PropTypes.string,

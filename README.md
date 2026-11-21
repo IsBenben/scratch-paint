@@ -1,11 +1,11 @@
-# TurboWarp/scratch-paint
+# IsBenben/scratch-paint
 
-Modified version of scratch-paint for TurboWarp
+Fork of TurboWarp/scratch-paint with the editor's native color picker improvements.
 
 ## Building
 
 ```bash
-git clone https://github.com/TurboWarp/scratch-paint.git
+git clone --branch develop https://github.com/IsBenben/scratch-paint.git
 cd scratch-paint
 pnpm install --frozen-lockfile
 pnpm start
@@ -14,7 +14,16 @@ pnpm run build
 
 Development playground runs on http://localhost:8078/playground/. Note that http://localhost:8078/ gives you the **built** playground, not the development playground.
 
-This checkout uses Node.js 24.18.0 and pnpm 10.33.0. For GUI development, keep it next to `scratch-gui` and follow that repository's workspace setup instructions. Install at the workspace root so that the GUI dependency is linked with `workspace:*`. The standalone lockfile supports paint's own CI; the workspace lockfile supports the combined editor. The native picker changes and pnpm configuration are also retained as a patch in `scratch-gui/scripts/workspace`.
+This checkout uses Node.js 24 and pnpm 10.33.0. For combined editor development, clone the workspace with its pinned GUI and paint submodules:
+
+```sh
+git clone --recurse-submodules https://github.com/IsBenben/scratch-editor-workspace.git
+cd scratch-editor-workspace
+pnpm install --frozen-lockfile
+pnpm --filter scratch-gui start
+```
+
+The GUI declares this fork as a pinned HTTPS Git dependency. The workspace overrides it with `workspace:*` so local paint source changes are used immediately. The standalone lockfile supports paint's own CI; the workspace lockfile supports the combined editor. Picker changes are committed directly to this fork.
 
 For more information, see https://docs.turbowarp.org/development/getting-started
 
